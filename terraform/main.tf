@@ -2,7 +2,7 @@ provider "aws" {
   region = "ap-southeast-2"
 }
 resource "aws_instance" "node1" {
-  ami =  "ami-46202e25"
+  ami =  "ami-39ac915a"
   instance_type = "t2.micro"
 tags {
     Name = "terraform-node1"
