@@ -1,87 +1,118 @@
-# Project Title
+# Packer and Terraform Tutorial
 
-One Paragraph of project description goes here
+In this tutroial, I am showing how we can create an AMI on AWS using packer,
+followed by a build of a Consul cluster using Terraform with the basic Apache
+server service registered with consul and consul UI.
 
 ## Getting Started
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
+The flow goes as follows:
+
+- Packer will create an AMI based on RHEL 7 on AWS, this will include all what
+you need for consul servers and clients.
+- Terraform will build the cluster based on the variables supplied within the
+terraform runtime folder, followed by starting up the consul cluster and the
+Apache service.
+
+The Packer folder consists of the following:
+
+- consul_cluster.json : This is the file where all the AMI specific details are
+being stored, such as the name of the AMI, type of base AMI used..etc usually you
+dont need to modify this file.
+- script.sh : this is the script that runs on top of the base AMI to create the new AMI.
+
+The Terraform folder consists of the following:
+
+main.tf : this is the main terraform body that runs and creates the cluster,
+you dont usually need to modify this file.
+
+variables.tf : this is the variables where you might want to change the instance type,
+default is t2.micro, also the size of the cluster, you can specify the no. of consul
+servers and the no. of clients.
+
+scripts/consul.service : this defines the consul service for systemctl SVM in RHEL 7
+scripts/configConsul : this is where the service configuration for consul and apache happens
+depending whether the node is a client or a server.
+by defualt once the count of the consul servers is reached, the clients portion will run
+using the script.
+
 
 ### Prerequisites
 
-What things you need to install the software and how to install them
+The only Prerequisites here are the following:
+
+- Active AWS account
+- Download the latest HashiCorp Packer and Terraform.
+- IAM role that is allowed to create instances, security groups..etc (admin role)
+- make sure to export your AWS_ACCESS_KEY and AWS_SECRET_ACCESS_KEY to your Environment
+best if you can add it to your bash_profile so you dont have to export it often
+
 
 ```
-Give examples
+export AWS_ACCESS_KEY_ID=AKIAIMUxxxxxxx
+export AWS_SECRET_ACCESS_KEY=Gud+ZHXj4LvGHJ261sxxxxxxxxxxxx
+
 ```
+you also need to have an active SSH key pair for Terraform cluster building,
+ if you dont have one, you can generate them using
+
+```
+ssh-keygen ~/.ssh/deployer-key
+```
+
 
 ### Installing
 
-A step by step series of examples that tell you have to get a development env running
-
-Say what the step will be
+Clone or download the code directly to your machine.
 
 ```
-Give the example
-```
-
-And repeat
-
-```
-until finished
-```
-
-End with an example of getting some data out of the system or using it for a little demo
-
-## Running the tests
-
-Explain how to run the automated tests for this system
-
-### Break down into end to end tests
-
-Explain what these tests test and why
-
-```
-Give an example
-```
-
-### And coding style tests
-
-Explain what these tests test and why
-
-```
-Give an example
+git clone https://github.com/nedshawa/project.git
 ```
 
 ## Deployment
 
-Add additional notes about how to deploy this on a live system
+Creating the AMIs needed for Terraform using Packer:
 
-## Built With
+- Go to Packer folder
 
-* [Dropwizard](http://www.dropwizard.io/1.0.2/docs/) - The web framework used
-* [Maven](https://maven.apache.org/) - Dependency Management
-* [ROME](https://rometools.github.io/rome/) - Used to generate RSS Feeds
+```
+packer consul_cluster.json
+```
 
-## Contributing
+AMI building will start and will result in an ami_id at the end
 
-Please read [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c63ec426) for details on our code of conduct, and the process for submitting pull requests to us.
+Creating the Cluster using Terraform
 
-## Versioning
+Modify the variables.tf file, and make sure you change the following variables:
 
-We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/your/project/tags).
+```
+public_key_path // from your recently created ssh key pair
+private_key_path // from your recently created ssh key pair
+ami // from the resuling ami_id after running packer
 
-## Authors
+```
 
-* **Billie Thompson** - *Initial work* - [PurpleBooth](https://github.com/PurpleBooth)
+you can change the region,cluster size and instance type if required.
 
-See also the list of [contributors](https://github.com/your/project/contributors) who participated in this project.
+you can also add your AWS keys values into the variables if you dont want to export
+them to the env.
 
-## License
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
+Plan the execution (dry run)
+```
+terraform plan
+```
 
-## Acknowledgments
+if you are happy then:
 
-* Hat tip to anyone who's code was used
-* Inspiration
-* etc
+Execute the plan
+```
+terraform apply
+```
+
+once the deployment is over, Terraform will print the public address for one
+of the consul-server nodes so you can connect to.
+
+to test the consul-ui go to:
+
+http://the-public-dns-node-name:8500/ui

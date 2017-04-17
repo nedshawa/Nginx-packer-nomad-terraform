@@ -36,7 +36,7 @@ provisioner "file" {
 
 provisioner "remote-exec" {
         scripts = [
-            "${path.module}/scripts/configConsulServer.sh",
+            "${path.module}/scripts/configConsul.sh",
         ]
     }
 

@@ -1,7 +1,7 @@
 {
     "variables": {
       "ami_id": "ami-39ac915a",
-      "app_name": "nomad"
+      "app_name": "consul"
     },
 
     "builders": [{
@@ -18,7 +18,7 @@
     }
   ],
       "tags": {
-          "Name": "db-{{user `app_name` }}",
+          "Name": "{{user `app_name` }}",
           "Env": "DEMO"
 
         }
