@@ -1,18 +1,42 @@
 provider "aws" {
   region = "${var.region}"
 }
-data "aws_availability_zones" "all" {}
-output "elb_dns_name" {
-  value = "${aws_elb.elb.dns_name}"
-}
-resource "aws_launch_configuration" "project" {
-  image_id =  "ami-677c7504"
-  instance_type = "t2.micro"
-  security_groups = ["${aws_security_group.instance.id}"]
+
+resource "aws_instance" "consul_server" {
+  ami =  "${var.ami}"
+  instance_type = "${var.instance_type}"
+  security_groups = ["${aws_security_group.instance.name}"]
   key_name = "${aws_key_pair.deployer.key_name}"
-  lifecycle {
-	create_before_destroy = true
-	}
+  count = "${var.consul_servers_count}"
+  availability_zone = "${element(split(",", lookup(var.azs, var.region)), count.index)}"
+tags {
+  Name = "consul-server-${count.index+1}"
+        Environment = "production"
+        Role = "consul"
+}
+connection {
+       user = "${var.aws_user}"
+       private_key = "${file("${var.private_key_path}")}"
+   }
+provisioner "remote-exec" {
+    inline = [
+      "echo ${var.consul_servers_count} > /tmp/consul-server-count",
+         "echo ${aws_instance.consul_server.0.private_ip} > /tmp/consul-server-addr",
+         "echo ${var.region} > /tmp/consul-datacenter",
+    ]
+}
+
+provisioner "file" {
+    source      = "scripts/consul.service"
+    destination = "/tmp/consul.service"
+  }
+
+provisioner "remote-exec" {
+        scripts = [
+            "${path.module}/scripts/configConsul.sh",
+        ]
+    }
+
 }
 
 resource "aws_key_pair" "deployer" {
@@ -33,54 +57,46 @@ resource "aws_security_group" "instance" {
     protocol = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-lifecycle {
-        create_before_destroy = true
-        }
-}
-resource "aws_autoscaling_group" "asg" {
-launch_configuration = "${aws_launch_configuration.project.id}"
- availability_zones = ["${data.aws_availability_zones.all.names}"]
-  min_size = 2
-  max_size = 10
-  load_balancers = ["${aws_elb.elb.name}"]
-  health_check_type = "ELB"
-  tag {
-    key = "Name"
-    value = "terraform-asg"
-    propagate_at_launch = true
+  ingress {
+    from_port = "8300"
+    to_port = "8302"
+    protocol = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
-}
-resource "aws_elb" "elb"{
- 	name= "terraform-elb"
- 	security_groups = ["${aws_security_group.elb.id}"]
- 	availability_zones = ["${data.aws_availability_zones.all.names}"]
- 	listener{
-	 lb_port = 80
-	 lb_protocol = "http"
-	 instance_port = 8080
-	 instance_protocol = "http"
-}
-	health_check {
-	 healthy_threshold = 2
-   	 unhealthy_threshold = 2
-   	 timeout = 3
-    	 interval = 30
-    	 target = "HTTP:80/"
+  ingress {
+    from_port = "8300"
+    to_port = "8302"
+    protocol = "udp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
-}
-resource "aws_security_group" "elb" {
-	name = "terraform-elb"
-
-	egress{
-	 from_port = 0
-    	 to_port = 0
-     	protocol = "-1"
-    	cidr_blocks = ["0.0.0.0/0"]
+  ingress {
+    from_port = "8400"
+    to_port = "8400"
+    protocol = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
-	ingress{
-		from_port = 80
-		to_port = 80
-		protocol = "tcp"
-		cidr_blocks =  [ "0.0.0.0/0"]
-}
+  ingress {
+    from_port = "8500"
+    to_port = "8500"
+    protocol = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  ingress {
+    from_port = "8600"
+    to_port = "8600"
+    protocol = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  ingress {
+    from_port = "8600"
+    to_port = "8600"
+    protocol = "udp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  egress {
+    from_port = "0"
+    to_port = "0"
+    protocol = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 }
