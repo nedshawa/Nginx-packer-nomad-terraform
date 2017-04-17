@@ -6,6 +6,7 @@ variable "aws_user" {default = "ec2-user"}
 variable "region" { default = "ap-southeast-2" }
 variable "ami"  { default = "ami-2a737a49"}
 variable "consul_servers_count" {default = "3"}
+variable "consul_cluster_count" {default = "5"}
 variable "instance_type" {default = "t2.micro"}
 variable "azs" {
     default = {

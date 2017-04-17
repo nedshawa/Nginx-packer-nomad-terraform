@@ -7,10 +7,10 @@ resource "aws_instance" "consul_server" {
   instance_type = "${var.instance_type}"
   security_groups = ["${aws_security_group.instance.name}"]
   key_name = "${aws_key_pair.deployer.key_name}"
-  count = "${var.consul_servers_count}"
+  count = "${var.consul_cluster_count}"
   availability_zone = "${element(split(",", lookup(var.azs, var.region)), count.index)}"
 tags {
-  Name = "consul-server-${count.index+1}"
+  Name = "consul-node-${count.index+1}"
         Environment = "production"
         Role = "consul"
 }
@@ -23,6 +23,9 @@ provisioner "remote-exec" {
       "echo ${var.consul_servers_count} > /tmp/consul-server-count",
          "echo ${aws_instance.consul_server.0.private_ip} > /tmp/consul-server-addr",
          "echo ${var.region} > /tmp/consul-datacenter",
+         "echo ${count.index+1} > /tmp/instance_count",
+         "echo ${self.private_ip} > /tmp/private_ip",
+        "echo ${self.public_ip} > /tmp/public_ip",
     ]
 }
 
@@ -33,7 +36,7 @@ provisioner "file" {
 
 provisioner "remote-exec" {
         scripts = [
-            "${path.module}/scripts/configConsul.sh",
+            "${path.module}/scripts/configConsulServer.sh",
         ]
     }
 
@@ -91,6 +94,12 @@ resource "aws_security_group" "instance" {
     from_port = "8600"
     to_port = "8600"
     protocol = "udp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  ingress {
+    from_port = "80"
+    to_port = "80"
+    protocol = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
   egress {
