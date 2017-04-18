@@ -123,4 +123,16 @@ http://the-public-dns-node-name:8500/ui
 you should see the Consul Cluster, Nomad Cluster, Nomad Clients, Apache service
 and nginx.
 
+you can check using the CLI on consul by:
+```
+consul members -http-addr http://private-ip-address:8500
+```
+to check for nomad just run
+```
+nomad server-members
+```
+to check for the status of the Job run
+```
+nomad status
+```
 Enjoy !
