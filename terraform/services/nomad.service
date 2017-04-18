@@ -1,0 +1,6 @@
+[Unit]
+Description=nomad
+
+[Service]
+ExecStart=/usr/bin/nomad agent -config /etc/nomad
+KillSignal=SIGTERM
