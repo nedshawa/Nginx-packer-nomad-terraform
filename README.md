@@ -1,8 +1,9 @@
-# Packer and Terraform Tutorial
+# Packer, Terraform and Nomad Tutorial
 
 In this tutroial, I am showing how we can create an AMI on AWS using packer,
-followed by a build of a Consul cluster using Terraform with the basic Apache
-server service registered with consul and consul UI.
+followed by a build of a Consul and Nomad cluster using Terraform with the basic Apache
+server service registered with consul and consul UI and finally start a nginx Job
+with Nomad creating docker containers to run nginx
 
 ## Getting Started
 
@@ -11,8 +12,10 @@ The flow goes as follows:
 - Packer will create an AMI based on RHEL 7 on AWS, this will include all what
 you need for consul servers and clients.
 - Terraform will build the cluster based on the variables supplied within the
-terraform runtime folder, followed by starting up the consul cluster and the
+terraform runtime folder, followed by starting up the consul and nomad cluster and the
 Apache service.
+- nomad clients will use consul to join nomad servers, with the last node Nomad
+will submit a job for nginx to start on the clients.
 
 The Packer folder consists of the following:
 
@@ -88,7 +91,7 @@ Modify the variables.tf file, and make sure you change the following variables:
 ```
 public_key_path // from your recently created ssh key pair
 private_key_path // from your recently created ssh key pair
-ami // from the resuling ami_id after running packer
+ami // from the resulting ami_id after running packer
 
 ```
 
@@ -116,3 +119,8 @@ of the consul-server nodes so you can connect to.
 to test the consul-ui go to:
 
 http://the-public-dns-node-name:8500/ui
+
+you should see the Consul Cluster, Nomad Cluster, Nomad Clients, Apache service
+and nginx.
+
+Enjoy !
