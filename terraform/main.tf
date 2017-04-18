@@ -24,6 +24,7 @@ provisioner "remote-exec" {
          "echo ${aws_instance.server.0.private_ip} > /tmp/consul-server-addr",
          "echo ${var.region} > /tmp/consul-datacenter",
          "echo ${count.index+1} > /tmp/instance_count",
+         "echo ${var.consul_cluster_count} > /tmp/cluster_count",
          "echo ${self.private_ip} > /tmp/private_ip",
         "echo ${self.public_ip} > /tmp/public_ip",
     ]
@@ -37,7 +38,10 @@ provisioner "file" {
       source      = "services/nomad.service"
       destination = "/tmp/nomad.service"
     }
-
+    provisioner "file" {
+        source      = "scripts/nginx.nomad"
+        destination = "/tmp/nginx.nomad"
+      }
 provisioner "remote-exec" {
         scripts = [
             "${path.module}/scripts/config.sh",
