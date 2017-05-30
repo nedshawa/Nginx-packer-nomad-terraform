@@ -1,4 +1,4 @@
-# Packer, Terraform and Nomad Tutorial
+# Nginx Deployment using Packer, Terraform and Nomad 
 
 In this tutroial, I am showing how we can create an AMI on AWS using packer,
 followed by a build of a Consul and Nomad cluster using Terraform with the basic Apache
