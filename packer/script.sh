@@ -21,8 +21,3 @@ sudo mv consul /usr/bin/consul
 sudo mkdir -p /etc/consul.d
 sudo mkdir -p /mnt/consul
 sudo mkdir -p /etc/service
-echo "Fetching Consul template..."
-curl -L -o consul-template.zip https://releases.hashicorp.com/consul-template/0.18.2/consul-template_0.18.2_linux_amd64.zip
-echo "installing Consul template..."
-unzip consul-template.zip >/dev/null
-sudo mv consul-template /opt/consul-template
